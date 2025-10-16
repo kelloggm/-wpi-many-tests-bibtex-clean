@@ -2,97 +2,138 @@ plugins {
   id "java"
   id "application"
 
-  // To create a fat jar build/libs/bibtex-clean-all.jar, run: ./gradlew shadowJar
-  id "com.gradleup.shadow" version "8.3.3"
+  // To create a fat jar build/libs/...-all.jar, run: ./gradlew shadowJar
+  id "com.gradleup.shadow" version "8.3.8"
 
-  // Formatting is disabled due to poor handling of type annotations; wait until
-  // this issue is fixed: https://github.com/google/google-java-format/issues/5
-  // // Code formatting with Google Java Format; defines targets "goJF" and "verJF".
-  // id "com.github.sherter.google-java-format" version "0.7.1"
+/*
+  // Code formatting; defines targets "spotlessApply" and "spotlessCheck"
+  // Requires JDK 11 or higher; the plugin crashes under JDK 8.
+  id "com.diffplug.spotless" version "7.2.1"
 
-  // // Error Prone linter
-  // id("net.ltgt.errorprone") version "1.2.1"
+  // Error Prone linter
+  id("net.ltgt.errorprone") version "4.3.0"
 
   // Checker Framework pluggable type-checking
-  // id "org.checkerframework" version "0.5.13"
+  id "org.checkerframework" version "0.6.56"
+*/
 }
 
 repositories {
-    mavenCentral()
+  mavenLocal()
+  mavenCentral()
+  maven { url = "https://central.sonatype.com/repository/maven-snapshots/" }
+}
+
+ext {
+  errorproneVersion = "2.41.0"
+  isJava17orHigher = JavaVersion.current() >= JavaVersion.VERSION_17
+  isJava21orHigher = JavaVersion.current() >= JavaVersion.VERSION_21
 }
 
 dependencies {
-    implementation "org.plumelib:plume-util:1.2.0"
-    implementation "org.checkerframework:checker-qual:3.+"
+  implementation "org.plumelib:plume-util:1.11.0"
+  implementation "org.checkerframework:checker-qual:3.+"
 
-    testImplementation "org.junit.jupiter:junit-jupiter-api:5.7.0"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
+  testImplementation("org.junit.jupiter:junit-jupiter:5.13.4")
+  testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-// sourceCompatibility = 1.8
-// targetCompatibility = 1.8
-
 application {
-  mainClassName = "org.plumelib.bibtex.BibtexClean"
+  mainClass = "org.plumelib.bibtex.BibtexClean"
+}
+
+java {
+  sourceCompatibility = JavaVersion.VERSION_11
+  targetCompatibility = JavaVersion.VERSION_11
 }
 
 test {
-    useJUnitPlatform {
-        includeEngines "junit-jupiter"
-        excludeEngines "junit-vintage"
-    }
+  useJUnitPlatform {
+    includeEngines "junit-jupiter"
+    excludeEngines "junit-vintage"
+  }
 }
 
-/// Error Prone linter
+/*
+spotless {
+  format "misc", {
+    // define the files to apply `misc` to
+    target "*.md", ".gitignore"
 
-// dependencies {
-//   errorprone("com.google.errorprone:error_prone_core:2.9.0")
-//   // JDK 8 support for Error Prone:
-//   errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
-// }
-// tasks.withType(JavaCompile).configureEach {
-//   options.compilerArgs << "-Xlint:all,-options" << "-Werror"
-//   options.errorprone {
-//     disable("ReferenceEquality") // Use Interning Checker instead.
-//   }
-//   if (JavaVersion.current() >= JavaVersion.VERSION_16) {
-//     options.fork = true
-//     options.forkOptions.jvmArgs += [
-//             "--add-opens", "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
-//             "--add-opens", "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED",
-//             "--add-opens", "jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED",
-//             "--add-opens", "jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED",
-//             "--add-opens", "jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
-//             "--add-opens", "jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED",
-//             "--add-opens", "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
-//             "--add-opens", "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
-//     ]
-//   }
-// }
+    // define the steps to apply to those files
+    trimTrailingWhitespace()
+    leadingTabsToSpaces(2)
+    endWithNewline()
+  }
+  java {
+    targetExclude("WeakIdentityHashMap.java")
+    googleJavaFormat()
+    formatAnnotations()
+  }
+  groovyGradle {
+    target "*.gradle"
+    greclipse()  // which formatter Spotless should use to format .gradle files.
+    leadingTabsToSpaces(2)
+    trimTrailingWhitespace()
+    // endWithNewline() // Don't want to end empty files with a newline
+  }
+}
 
-/// Checker Framework pluggable type-checking
+// Error Prone linter
 
-/*apply plugin: "org.checkerframework"
+dependencies {
+  errorprone("com.google.errorprone:error_prone_core:${errorproneVersion}")
+}
+tasks.withType(JavaCompile).configureEach {
+  // "-processing" avoids javac warning "No processor claimed any of these annotations".
+  options.compilerArgs << "-Xlint:all,-processing" << "-Werror"
+  options.errorprone {
+    disable("ReferenceEquality") // Use Interning Checker instead.
+    disable("AnnotateFormatMethod") // Error Prone doesn't know about Checker Framework @FormatMethod
+  }
+  options.errorprone.enabled = isJava17orHigher
+}
+
+// Checker Framework pluggable type-checking
+
+apply plugin: "org.checkerframework"
 
 checkerFramework {
   checkers = [
-    "org.checkerframework.checker.formatter.FormatterChecker",
-    "org.checkerframework.checker.index.IndexChecker",
-    "org.checkerframework.checker.interning.InterningChecker",
-    "org.checkerframework.checker.lock.LockChecker",
-    "org.checkerframework.checker.nullness.NullnessChecker",
-    "org.checkerframework.checker.regex.RegexChecker",
-    "org.checkerframework.checker.signature.SignatureChecker",
-    "org.checkerframework.common.initializedfields.InitializedFieldsChecker"
+  // No need to run CalledMethodsChecker, because ResourceLeakChecker does so.
+  // "org.checkerframework.checker.calledmethods.CalledMethodsChecker",
+  "org.checkerframework.checker.formatter.FormatterChecker",
+  "org.checkerframework.checker.index.IndexChecker",
+  "org.checkerframework.checker.interning.InterningChecker",
+  "org.checkerframework.checker.lock.LockChecker",
+  "org.checkerframework.checker.nullness.NullnessChecker",
+  "org.checkerframework.checker.regex.RegexChecker",
+  "org.checkerframework.checker.resourceleak.ResourceLeakChecker",
+  "org.checkerframework.checker.signature.SignatureChecker",
+  "org.checkerframework.checker.signedness.SignednessChecker",
+  "org.checkerframework.common.initializedfields.InitializedFieldsChecker",
   ]
   extraJavacArgs = [
-    "-Werror",
-    "-AcheckPurityAnnotations",
-    "-ArequirePrefixInWarningSuppressions",
-    "-AwarnUnneededSuppressions",
+  "-Werror",
+  "-AcheckPurityAnnotations",
+  "-ArequirePrefixInWarningSuppressions",
+    "-AwarnRedundantAnnotations",
+  "-AwarnUnneededSuppressions",
   ]
 }
-
+// To use a snapshot version of the Checker Framework.
+if (false) {
+  // TODO: Change the above test to false when CF is released.
+  ext.checkerFrameworkVersion = "3.49.5"
+  dependencies {
+    compileOnly "org.checkerframework:checker-qual:${checkerFrameworkVersion}"
+    testCompileOnly "org.checkerframework:checker-qual:${checkerFrameworkVersion}"
+    checkerFramework "org.checkerframework:checker:${checkerFrameworkVersion}"
+  }
+  configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, "minutes"
+  }
+}
 // To use a locally-built Checker Framework, run gradle with "-PcfLocal".
 if (project.hasProperty("cfLocal")) {
   def cfHome = String.valueOf(System.getenv("CHECKERFRAMEWORK"))
@@ -101,54 +142,54 @@ if (project.hasProperty("cfLocal")) {
     testCompileOnly files(cfHome + "/checker/dist/checker-qual.jar")
     checkerFramework files(cfHome + "/checker/dist/checker.jar")
   }
-}*/
+}
+*/
 
-/// Javadoc
+// Javadoc
 
 // Turn Javadoc warnings into errors.
 javadoc {
   options.addStringOption("Xwerror", "-Xdoclint:all")
   options.addStringOption("private", "-quiet")
-  // if (JavaVersion.current().compareTo(org.gradle.api.JavaVersion.VERSION_1_9) >= 0) {
-  //     options.addStringOption("-release", "8");
-  // }
+  options.addStringOption("source", "11")
   doLast {
-    if (JavaVersion.current() == JavaVersion.VERSION_1_8) {
-      ant.replaceregexp(match:"@import url\\('resources/fonts/dejavu.css'\\);\\s*", replace:"",
+    ant.replaceregexp(match:"@import url\\("resources/fonts/dejavu.css"\\);\\s*", replace:"",
 	flags:"g", byline:true) {
 	fileset(dir: destinationDir)
-      }
     }
   }
-}
+  }
 check.dependsOn javadoc
 
 configurations {
   requireJavadoc
 }
 dependencies {
-  requireJavadoc "org.plumelib:require-javadoc:1.0.0"
+  requireJavadoc "org.plumelib:require-javadoc:2.0.0"
 }
 task requireJavadoc(type: JavaExec) {
+  group = "Documentation"
   description = "Ensures that Javadoc documentation exists."
-  main = "org.plumelib.javadoc.RequireJavadoc"
+  mainClass = "org.plumelib.javadoc.RequireJavadoc"
   classpath = configurations.requireJavadoc
   args "src/main/java"
+  jvmArgs += [
+    "--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+    "--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
+    "--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+    "--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+    "--add-opens=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+    "--add-opens=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
+    "--add-opens=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+    "--add-opens=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+  ]
 }
 check.dependsOn requireJavadoc
 
-// Run by `gradle check`, which is run by `gradle build`
-apply plugin: "checkstyle"
-checkstyle {
-    toolVersion = "8.11"
-    ignoreFailures = false
-//    configFile = file("${project.rootDir}/checkstyle.xml")
-}
-
-/// Emacs support
+// Emacs support
 
 /* Make Emacs TAGS table */
 task tags(type: Exec) {
-  description "Run etags to create an Emacs TAGS table"
+  description = "Run etags to create an Emacs TAGS table"
   commandLine "bash", "-c", "find src/ -name "*.java" | sort | xargs etags"
 }

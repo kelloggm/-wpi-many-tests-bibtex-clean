@@ -153,7 +153,7 @@ javadoc {
   options.addStringOption("private", "-quiet")
   options.addStringOption("source", "11")
   doLast {
-    ant.replaceregexp(match:"@import url\\("resources/fonts/dejavu.css"\\);\\s*", replace:"",
+    ant.replaceregexp(match:"@import url\\('resources/fonts/dejavu.css'\\);\\s*", replace:"",
 	flags:"g", byline:true) {
 	fileset(dir: destinationDir)
     }
@@ -191,5 +191,5 @@ check.dependsOn requireJavadoc
 /* Make Emacs TAGS table */
 task tags(type: Exec) {
   description = "Run etags to create an Emacs TAGS table"
-  commandLine "bash", "-c", "find src/ -name "*.java" | sort | xargs etags"
+  commandLine "bash", "-c", "find src/ -name '*.java' | sort | xargs etags"
 }

@@ -1,20 +1,20 @@
 plugins {
-  id 'java'
-  id 'application'
+  id "java"
+  id "application"
 
   // To create a fat jar build/libs/bibtex-clean-all.jar, run: ./gradlew shadowJar
-  id 'com.gradleup.shadow' version '8.3.3'
+  id "com.gradleup.shadow" version "8.3.3"
 
   // Formatting is disabled due to poor handling of type annotations; wait until
   // this issue is fixed: https://github.com/google/google-java-format/issues/5
   // // Code formatting with Google Java Format; defines targets "goJF" and "verJF".
-  // id 'com.github.sherter.google-java-format' version '0.7.1'
+  // id "com.github.sherter.google-java-format" version "0.7.1"
 
   // // Error Prone linter
   // id("net.ltgt.errorprone") version "1.2.1"
 
   // Checker Framework pluggable type-checking
-  // id 'org.checkerframework' version '0.5.13'
+  // id "org.checkerframework" version "0.5.13"
 }
 
 repositories {
@@ -22,24 +22,24 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.plumelib:plume-util:1.2.0'
-    implementation 'org.checkerframework:checker-qual:3.+'
+    implementation "org.plumelib:plume-util:1.2.0"
+    implementation "org.checkerframework:checker-qual:3.+"
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.7.0"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
 }
 
 // sourceCompatibility = 1.8
 // targetCompatibility = 1.8
 
 application {
-  mainClassName = 'org.plumelib.bibtex.BibtexClean'
+  mainClassName = "org.plumelib.bibtex.BibtexClean"
 }
 
 test {
     useJUnitPlatform {
-        includeEngines 'junit-jupiter'
-        excludeEngines 'junit-vintage'
+        includeEngines "junit-jupiter"
+        excludeEngines "junit-vintage"
     }
 }
 
@@ -72,24 +72,24 @@ test {
 
 /// Checker Framework pluggable type-checking
 
-/*apply plugin: 'org.checkerframework'
+/*apply plugin: "org.checkerframework"
 
 checkerFramework {
   checkers = [
-    'org.checkerframework.checker.formatter.FormatterChecker',
-    'org.checkerframework.checker.index.IndexChecker',
-    'org.checkerframework.checker.interning.InterningChecker',
-    'org.checkerframework.checker.lock.LockChecker',
-    'org.checkerframework.checker.nullness.NullnessChecker',
-    'org.checkerframework.checker.regex.RegexChecker',
-    'org.checkerframework.checker.signature.SignatureChecker',
-    'org.checkerframework.common.initializedfields.InitializedFieldsChecker'
+    "org.checkerframework.checker.formatter.FormatterChecker",
+    "org.checkerframework.checker.index.IndexChecker",
+    "org.checkerframework.checker.interning.InterningChecker",
+    "org.checkerframework.checker.lock.LockChecker",
+    "org.checkerframework.checker.nullness.NullnessChecker",
+    "org.checkerframework.checker.regex.RegexChecker",
+    "org.checkerframework.checker.signature.SignatureChecker",
+    "org.checkerframework.common.initializedfields.InitializedFieldsChecker"
   ]
   extraJavacArgs = [
-    '-Werror',
-    '-AcheckPurityAnnotations',
-    '-ArequirePrefixInWarningSuppressions',
-    '-AwarnUnneededSuppressions',
+    "-Werror",
+    "-AcheckPurityAnnotations",
+    "-ArequirePrefixInWarningSuppressions",
+    "-AwarnUnneededSuppressions",
   ]
 }
 
@@ -107,15 +107,15 @@ if (project.hasProperty("cfLocal")) {
 
 // Turn Javadoc warnings into errors.
 javadoc {
-  options.addStringOption('Xwerror', '-Xdoclint:all')
-  options.addStringOption('private', '-quiet')
+  options.addStringOption("Xwerror", "-Xdoclint:all")
+  options.addStringOption("private", "-quiet")
   // if (JavaVersion.current().compareTo(org.gradle.api.JavaVersion.VERSION_1_9) >= 0) {
   //     options.addStringOption("-release", "8");
   // }
   doLast {
     if (JavaVersion.current() == JavaVersion.VERSION_1_8) {
-      ant.replaceregexp(match:"@import url\\('resources/fonts/dejavu.css'\\);\\s*", replace:'',
-	flags:'g', byline:true) {
+      ant.replaceregexp(match:"@import url\\('resources/fonts/dejavu.css'\\);\\s*", replace:"",
+	flags:"g", byline:true) {
 	fileset(dir: destinationDir)
       }
     }
@@ -130,7 +130,7 @@ dependencies {
   requireJavadoc "org.plumelib:require-javadoc:1.0.0"
 }
 task requireJavadoc(type: JavaExec) {
-  description = 'Ensures that Javadoc documentation exists.'
+  description = "Ensures that Javadoc documentation exists."
   main = "org.plumelib.javadoc.RequireJavadoc"
   classpath = configurations.requireJavadoc
   args "src/main/java"
@@ -138,7 +138,7 @@ task requireJavadoc(type: JavaExec) {
 check.dependsOn requireJavadoc
 
 // Run by `gradle check`, which is run by `gradle build`
-apply plugin: 'checkstyle'
+apply plugin: "checkstyle"
 checkstyle {
     toolVersion = "8.11"
     ignoreFailures = false
@@ -150,5 +150,5 @@ checkstyle {
 /* Make Emacs TAGS table */
 task tags(type: Exec) {
   description "Run etags to create an Emacs TAGS table"
-  commandLine "bash", "-c", "find src/ -name '*.java' | sort | xargs etags"
+  commandLine "bash", "-c", "find src/ -name "*.java" | sort | xargs etags"
 }
